@@ -1,0 +1,53 @@
+{
+  "name": "refi",
+  "version": "0.1.0",
+  "description": "refi",
+  "author": "bsen@inage-tech.com",
+  "dependencies": {
+    "@apollo/react-hooks": "^4.0.0",
+    "@chainlink/contracts": "^0.0.9",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
+    "@openzeppelin/contracts": "^3.2.0",
+    "@truffle/hdwallet-provider": "^1.0.44",
+    "apollo-boost": "^0.4.9",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-env": "1.7.0",
+    "babel-preset-es2015": "6.24.1",
+    "babel-preset-stage-2": "6.24.1",
+    "babel-preset-stage-3": "6.24.1",
+    "babel-register": "6.26.0",
+    "bootstrap": "4.3.1",
+    "chai": "4.2.0",
+    "chai-as-promised": "7.1.1",
+    "chai-bignumber": "3.0.0",
+    "gapi-script": "^1.0.2",
+    "graphql": "^15.3.0",
+    "identicon.js": "^2.3.3",
+    "material-ui": "^0.20.2",
+    "react": "16.8.4",
+    "react-bootstrap": "1.0.0-beta.5",
+    "react-dom": "16.8.4",
+    "react-redux": "^7.2.1",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "2.1.3",
+    "redux": "^4.0.5",
+    "truffle": "5.1.39",
+    "web3": "1.2.11"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
