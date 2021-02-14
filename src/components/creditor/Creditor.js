@@ -2,39 +2,32 @@ import React, {useState, useEffect} from 'react'
 import RefiPolicy from "../../abis/RefiPolicy.json";
 import MyV2CreditDelegation from "../../abis/MyV2CreditDelegation.json"
 import { useStore } from "../../store/store";
-//import { callCreditDelegate } from './creditDelegate';
-import { deposit } from '../delegatee/DefiFunctions';
+import { callCreditDelegate } from './creditDelegate-web3';
+import { deposit } from '../defifuncs/DefiFunctions';
 
 import ERC20ABI from "../../ABI/ERC20ABI.json";
-import AaveTokenABI from '../../ABI/AToken.json'
 
 import clinkImage from "../../icons/chainlink.png";
 import wethImage from "../../icons/weth.png";
 import daiImage from "../../icons/dai.png";
 
-//account 3 as delegatee address
-const delegateeAddress = "0x3166B6c178fB401b6DE3FA0a9D9A15A881125495";
-
 const linkAddressKovan = "0xAD5ce863aE3E4E9394Ab43d4ba0D80f419F61789";
 const daiAddressKovan = "0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD";
-const aDaiAddressKovan = "0x58AD4cB396411B691A9AAb6F74545b2C5217FE6a";
-const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-const aaveTokenAddress = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9";
+//const aDaiAddressKovan = "0x58AD4cB396411B691A9AAb6F74545b2C5217FE6a";
+const aDaiAddressKovan = '0xdCf0aF9e59C002FA3AA091a46196b37530FD48a8';
+
 
 const Creditor = props => {
 
   const store = useStore();
-  const {
-    web3,
-    account,
-    network
-  } = store.state;
+  const { web3, account, network } = store.state;
 
   const [loading, setLoading] = useState(true)
   const [refiPolicy, setRefiPolicy] = useState(null)
   const [myV2CreditDelegation, setMyV2CreditDelegation] = useState(null)
   const [delegateeAddress, setDelegateeAddress] = useState(null)
-  const [aaveBalance, setAaveBalance] = useState(400)
+  const [delegateAmount, setDelegateAmount] = useState(0)
+  const [aaveBalance, setAaveBalance] = useState('')
   const [erc20Balance, setErc20Balance] = useState('')
   const [tokenImage, setTokenImage] = useState(null);
   const [tokenName, setTokenName]  = useState('');
@@ -45,20 +38,14 @@ const Creditor = props => {
     success: ''
   });
 
-  const updateADAIBalance = async () => {
-      const erc20 = new web3.eth.Contract(ERC20ABI, aDaiAddressKovan);
-      await erc20.methods.balanceOf(account).call(
-        (err, _ethBalance) => {
-          setAaveBalance(web3.utils.fromWei(_ethBalance, 'ether'));
-       });
-  }
-
+ 
   useEffect(() => {
     async function getAccount() {
       if (!web3) {
         alert("Creditor: web3 provider is NOT set up with the browser.")
       }
       else {
+        console.log('Creditor.js: Get Policy Data References')
         const refiPolicyData = RefiPolicy.networks[network];
         let _refiPolicy ;
         if (refiPolicyData) {
@@ -88,29 +75,27 @@ const Creditor = props => {
       }
     }
     getAccount()
-          }, 
-    []);
+    }, []);
 
-    const delegateCredit = (creditAmount) => {
-        alert('CALL Credit Delegate');
-        const daiAmountinWei = web3.utils.toWei(creditAmount, "ether").toString();
-        try {
-            setLoading(true);
-            myV2CreditDelegation.methods
-            .approveBorrower(delegateeAddress, daiAmountinWei, daiAddressKovan)
-            .send({ from: account })
-            .on("transactionHash", (hash) => {
-                setLoading(false);
-            });
-        } catch (error){
-            alert(error);
-            setLoading(false);
-            setState({...state,  error: error.response.data.error})
-        }
-    };
-
+    
     const addDelegatee = async e => {
-      delegateCredit("1");
+        const daiAmountinWei = web3.utils.toWei(delegateAmount, "ether").toString();
+        await callCreditDelegate(web3, account, network, 
+                                 delegateeAddress, daiAmountinWei);
+        // try {
+        //     setLoading(true);
+        //     myV2CreditDelegation.methods
+        //     .approveBorrower(delegateeAddress, daiAmountinWei, daiAddressKovan)
+        //     .send({ from: account })
+        //     .on("transactionHash", (hash) => {
+        //         setLoading(false);
+        //     });
+        // } catch (error){
+        //     alert(error);
+        //     setLoading(false);
+        //     setState({...state,  error: error.response.data.error})
+        // }
+
         // try {
         //     e.preventDefault();
         //     setLoading(true);
@@ -126,6 +111,7 @@ const Creditor = props => {
         //     console.log(error);
         //     setState({...state,  error: error.response.data.error})
         // }
+
     }
 
     const changeToken = async (tokenImage, tokenName )=> {
@@ -157,20 +143,18 @@ const Creditor = props => {
           
     }
 
-  const loginForm = () => (
-    <form onSubmit={addDelegatee}>
-        <div className="form-group">
-            <label>Enter Delegatee Address: </label>
-            <input value={delegateeAddress} 
-                   onChange={ e => setDelegateeAddress(e.target.value)}
-                   type="text" 
-                   className="form-control" placeholder="delegatee address"  required />
-        </div>
-        <div className="form-group">
-            <button className="btn btn-outline-warning">Add Credit Delegatee</button>
-        </div>
-    </form>
-  );
+    const updateADAIBalance = async () => {
+      const erc20 = new web3.eth.Contract(ERC20ABI, aDaiAddressKovan);
+      await erc20.methods.balanceOf(account).call(
+        (err, _ethBalance) => {
+          setAaveBalance(web3.utils.fromWei(_ethBalance, 'ether'));
+       });
+   }
+
+   const depositAsset = (account, tokenValue) => {
+         deposit(web3, account, tokenValue)
+   }
+
 
   return (
     <div className="col-md-6 offset-md-3">
@@ -250,7 +234,7 @@ const Creditor = props => {
                   <input type="button" id="aave" name="token" value="Deposit DAI for AAVE"
                       onClick={(event) => {
                       event.preventDefault();
-                      deposit(web3, account, tokenValue);
+                      depositAsset( account, tokenValue);
                       updateADAIBalance();
                     }}
                   />
@@ -260,7 +244,22 @@ const Creditor = props => {
               </div>
               </div>
 
-        {loginForm()}
+        <div className="form-group">
+            <label>Enter Delegatee Address: </label>
+            <input value={delegateeAddress} 
+                   onChange={ e => setDelegateeAddress(e.target.value)}
+                   className="form-control" placeholder=""  required />
+        </div>
+        <div className="form-group">
+            <label>Enter Delegate Amount: </label>
+            <input value={delegateAmount} 
+                   onChange={ e => setDelegateAmount(e.target.value)}
+                   className="form-control" placeholder=""  required />
+        </div>
+        <div className="form-group">
+            <button className="btn btn-outline-warning" onClick={addDelegatee}>Add Credit Delegatee</button>
+        </div>
+
     </div>
   );
 

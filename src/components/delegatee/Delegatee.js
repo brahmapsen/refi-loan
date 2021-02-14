@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react'
 
 import RefiPolicy from "../../abis/RefiPolicy.json";
 import { useStore } from "../../store/store";
-import { borrow, repay } from './DefiFunctions';
+import { borrow, repay } from '../defifuncs/DefiFunctions';
 
 export default (props) => {
 

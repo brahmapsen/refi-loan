@@ -95,12 +95,12 @@ const Header = (props) => {
   const classes = useStyles();
 
   let web3;
-  let account = "";
   let modals = state.modals;
 
   const [anchorElement, setAnchorElement] = useState(null);
   const [walletAnchorElement, setWalletAnchorElement] = useState(null);
   const [walletsModalOpen, setWalletsModalOpen] = useState(true);
+  const [account, setAccount] = useState('');
   
   const onWalletClick = async (event) => {
     if (!props.address) {
@@ -125,42 +125,7 @@ const Header = (props) => {
     setAnchorElement(event.currentTarget);
   };
 
-// event handler for google signin
-const onSignIn = (googleUser) => {
-  const tokenId = googleUser.getAuthResponse().id_token;
 
-  if (tokenId) {
-    // send the token id to backend and update state
-    window
-      .fetch('http://localhost:3000/login/google', {
-        method: 'POST',
-        mode: 'cors',
-        body: JSON.stringify({ tokenId }),
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-      .then((response) => response.json())
-      .then((data) => {
-        const profile = googleUser.getBasicProfile();
-
-        const userDetails = {
-          token: data.token,
-          userId: profile.getId(),
-          name: profile.getGivenName(),
-          imageUrl: profile.getImageUrl(),
-        };
-
-        props.onSignInSuccess(userDetails); // dispatch to update state
-      });
-  }
-};
-
-// event handler for google signin failure
-const onFailure = (error) => {
-  console.log('FAILED TO SIGN IN', error);
-};
 
 useEffect(() => {
   async function getAccount() {
@@ -175,7 +140,7 @@ useEffect(() => {
       window.ethereum.enable();
       window.web3 = web3;
       // set account
-      account = (await web3.eth.getAccounts())[0];
+      setAccount ( (await web3.eth.getAccounts())[0] );
       //set network ID
       const network = await web3.eth.net.getId();
 
@@ -192,7 +157,7 @@ useEffect(() => {
   }
   getAccount()
   
-}, []);
+}, [web3, account]);
 
 
 const googleSigninButton = (
