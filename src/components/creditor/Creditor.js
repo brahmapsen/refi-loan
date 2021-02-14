@@ -1,9 +1,8 @@
 import React, {useState, useEffect} from 'react'
 import RefiPolicy from "../../abis/RefiPolicy.json";
-import MyV2CreditDelegation from "../../abis/MyV2CreditDelegation.json"
 import { useStore } from "../../store/store";
 import { callCreditDelegate } from './creditDelegate-web3';
-import { deposit } from '../defifuncs/DefiFunctions';
+import { deposit, redeem } from '../defifuncs/DefiFunctions';
 
 import ERC20ABI from "../../ABI/ERC20ABI.json";
 
@@ -16,7 +15,6 @@ const daiAddressKovan = "0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD";
 //const aDaiAddressKovan = "0x58AD4cB396411B691A9AAb6F74545b2C5217FE6a";
 const aDaiAddressKovan = '0xdCf0aF9e59C002FA3AA091a46196b37530FD48a8';
 
-
 const Creditor = props => {
 
   const store = useStore();
@@ -24,9 +22,8 @@ const Creditor = props => {
 
   const [loading, setLoading] = useState(true)
   const [refiPolicy, setRefiPolicy] = useState(null)
-  const [myV2CreditDelegation, setMyV2CreditDelegation] = useState(null)
   const [delegateeAddress, setDelegateeAddress] = useState(null)
-  const [delegateAmount, setDelegateAmount] = useState(0)
+  const [delegateAmount, setDelegateAmount] = useState('')
   const [aaveBalance, setAaveBalance] = useState('')
   const [erc20Balance, setErc20Balance] = useState('')
   const [tokenImage, setTokenImage] = useState(null);
@@ -55,14 +52,6 @@ const Creditor = props => {
           window.alert("RefiPolicy contract not deployed to detected network.");
         }
 
-        const myV2CreditDelegationData = MyV2CreditDelegation.networks[network];
-        if (myV2CreditDelegationData) {
-            const myV2CreditDelegation = new web3.eth.Contract(MyV2CreditDelegation.abi,myV2CreditDelegationData.address);
-            setMyV2CreditDelegation(myV2CreditDelegation);
-        } else {
-            console.log("MyV2CreditDelegation contract not deployed to detected network.");
-        }
-
         setTokenName("WETH");
         await web3.eth.getBalance(account, (err, _ethBalance) => {
           setErc20Balance(web3.utils.fromWei(_ethBalance, 'ether'));
@@ -82,19 +71,6 @@ const Creditor = props => {
         const daiAmountinWei = web3.utils.toWei(delegateAmount, "ether").toString();
         await callCreditDelegate(web3, account, network, 
                                  delegateeAddress, daiAmountinWei);
-        // try {
-        //     setLoading(true);
-        //     myV2CreditDelegation.methods
-        //     .approveBorrower(delegateeAddress, daiAmountinWei, daiAddressKovan)
-        //     .send({ from: account })
-        //     .on("transactionHash", (hash) => {
-        //         setLoading(false);
-        //     });
-        // } catch (error){
-        //     alert(error);
-        //     setLoading(false);
-        //     setState({...state,  error: error.response.data.error})
-        // }
 
         // try {
         //     e.preventDefault();
@@ -151,9 +127,12 @@ const Creditor = props => {
        });
    }
 
-   const depositAsset = (account, tokenValue) => {
+   const depositAsset = (tokenValue) => {
          deposit(web3, account, tokenValue)
    }
+   const withdrawAsset = (tokenValue) => {
+         redeem(web3, account, tokenValue)
+  }
 
 
   return (
@@ -234,7 +213,15 @@ const Creditor = props => {
                   <input type="button" id="aave" name="token" value="Deposit DAI for AAVE"
                       onClick={(event) => {
                       event.preventDefault();
-                      depositAsset( account, tokenValue);
+                      depositAsset(tokenValue);
+                      updateADAIBalance();
+                    }}
+                  />
+                  &nbsp;&nbsp;&nbsp;&nbsp;
+                  <input type="button" id="aave" name="token" value="Withdraw from AAVE"
+                      onClick={(event) => {
+                      event.preventDefault();
+                      withdrawAsset(tokenValue);
                       updateADAIBalance();
                     }}
                   />

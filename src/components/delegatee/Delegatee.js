@@ -15,6 +15,7 @@ export default (props) => {
   const [refiPolicy, setRefiPolicy] = useState(null)
   const [loading, setLoading] = useState(true)
   const [daiAmount, setDaiAmount] = useState('')
+  const [delegatorAddress, setDelegatorAddress] = useState('')
 
   useEffect(() => {
     async function getAccount() {
@@ -39,34 +40,27 @@ export default (props) => {
 
 
   //Borrow
-  const borrowAmount = () => {
-    borrow(web3, account,daiAmount)
+  const borrowAmount = async () => {
+    const referralCode = "0"; //no referral code
+    const interestRateMode = 1 ;//fixed rate
+    await borrow(web3, daiAmount, interestRateMode, referralCode, delegatorAddress, account);
   };
 
   const repayAmount = () => {
-        repay(web3, account,daiAmount)
+    const interestRateMode = 1; // fixed rate
+    repay(web3, daiAmount, interestRateMode, delegatorAddress, account);
   };
-
-  // const borrowAmount = () => {
-  //   //if(!loading) setLoading(true);
-  //   refiPolicy.methods.registerBorrower()
-  //     .send({ from: account })
-  //     .on("transactionHash", (hash) => {
-  //       //setLoading(false);
-  //     });
-  // };
-
 
 
     return (
         <div id="content" className="mt-3">
             &nbsp;
             <div className="col-md-6 offset-md-3">
-              <p><b>Lender Address:</b> {account}  
+              <p><b>Account Address:</b> {account}  
                 &nbsp; &nbsp; &nbsp;
                 <input type="checkbox" 
                        onChange={ (id) =>  id.checked = !id.checked }
-                /> &nbsp;  Credit Delegated
+                />   Credit Delegated
               </p>
               <hr/>
             </div>
@@ -75,6 +69,13 @@ export default (props) => {
 
             <div className="col-md-6 offset-md-3">
             <h1>Borrow and Repay </h1>&nbsp;&nbsp;
+                <label>Enter Delegator Address: </label>
+                <input className="form-control"  value={delegatorAddress} 
+                       onChange={ e => setDelegatorAddress(e.target.value)}
+                       type="text" 
+                       placeholder="Delegator Address"  required />
+                
+                &nbsp;&nbsp;
                 <label>Enter Amount: </label>
                 <input className="form-control"  value={daiAmount} 
                        onChange={ e => setDaiAmount(e.target.value)}

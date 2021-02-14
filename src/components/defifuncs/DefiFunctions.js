@@ -71,19 +71,16 @@ export const deposit = async (web3, myAddress, depositAmt) => {
    * Borrow DAI from Aave
    * Note: User must have already deposited some collateral to borrow
    */
-  export const borrow = async (web3, myAddress, borrowAmt) => {
-    console.log('in Borrow: ');
+  export const borrow = async (web3, borrowAmt, interestRateMode,
+                                  referralCode, delegatorAddress, onBehalfOf) => {
     const daiAmountinWei = web3.utils.toWei(borrowAmt, "ether").toString();
-    const interestRateMode = 1; // fixed rate
-    const referralCode = "0";
-    const onBehalfOf = myAddress;
     try {
       // Make the borrow transaction via LendingPool contract
-      const lpAddress = await getLendingPoolAddress(web3)
+      const lpAddress = await getLendingPoolAddress(web3);
       const lpContract = new web3.eth.Contract(LendingPoolABI.abi, lpAddress)
       await lpContract.methods
-        .borrow(daiAddressKovan, daiAmountinWei, interestRateMode, referralCode, myAddress)
-        .send({ from: myAddress })
+        .borrow(daiAddressKovan, daiAmountinWei, interestRateMode, referralCode, delegatorAddress)
+        .send({ from: onBehalfOf })
         .catch((e) => {
           throw Error(`Error borrowing from the LendingPool contract: ${e.message}`)
         })
@@ -92,30 +89,57 @@ export const deposit = async (web3, myAddress, depositAmt) => {
       console.log(e.message)
     }
   }
-
   /**
    * Repay an outstanding borrow with DAI - Note: User must have borrowed DAI
    */
-  export const repay = async (web3, myAddress, repayAmt) => {
-    console.log('in Repay: ');
-    const daiAmountinWei = web3.utils.toWei(repayAmt, "ether").toString();
-    const interestRateMode = 1; // fixed rate
-    const onBehalfOf = myAddress;
-    try {
-      // Repay via LendingPool contract
-      const lpAddress = await getLendingPoolAddress(web3)
-      const lpContract = new web3.eth.Contract(LendingPoolABI.abi, lpAddress)
-      await lpContract.methods
-        .repay(daiAddressKovan, daiAmountinWei, interestRateMode, myAddress)
+    export const repay = async (web3, repayAmt, interestRateMode,  onBehalfOf, senderAddress ) => {
+      const daiAmountinWei = web3.utils.toWei(repayAmt, "ether").toString();
+      try {
+        // Repay via LendingPool contract
+        const lpAddress = await getLendingPoolAddress(web3);
+        const lpContract = new web3.eth.Contract(LendingPoolABI.abi, lpAddress)
+        await lpContract.methods
+          .repay(daiAddressKovan, daiAmountinWei, interestRateMode, onBehalfOf)
+          .send({ from: senderAddress })
+          .catch((e) => {
+            throw Error(`Error repaying in the LendingPool contract: ${e.message}`)
+          })
+      } catch (e) {
+        alert(e.message)
+        console.log(e.message)
+      }
+  }
+
+export const redeem = async (web3, myAddress, redeemAmt) => {
+  const daiAmountinWei = web3.utils.toWei(redeemAmt, "ether").toString();
+  try {
+      // Approve the LendingPoolCore address with the DAI contract
+      const daiContract = new web3.eth.Contract(ERC20ABI, daiAddressKovan);
+
+      // Make the withdraw transaction via LendingPool contract
+      const lpAddress = await getLendingPoolAddress(web3);
+
+      await daiContract.methods
+        .approve(lpAddress, daiAmountinWei)
         .send({ from: myAddress })
         .catch((e) => {
-          throw Error(`Error repaying in the LendingPool contract: ${e.message}`)
+          throw Error(`Error approving DAI allowance: ${e.message}`)
+        })
+
+      const lpContract = new web3.eth.Contract(LendingPoolABI.abi, lpAddress)
+      await lpContract.methods
+        .withdraw(daiAddressKovan, daiAmountinWei, myAddress)
+        .send({ from: myAddress })
+        .catch((e) => {
+          throw Error(`Error withdrawing to the LendingPool contract: ${e.message}`)
         })
     } catch (e) {
       alert(e.message)
       console.log(e.message)
     }
-  }
+    //call to record the Aave amount for the address in the contract
+    //addAaveToContract(depositAmt,aDaiAddress)
+}
 
   
 
